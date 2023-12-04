@@ -1,0 +1,55 @@
+group_id: org.concopilot.example.interface.chat
+artifact_id: simple-web-chat-user-interface
+version: 0.0.0
+
+type: user_interface
+as_plugin: false
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.2
+    - PyYAML
+  package: concopilot_examples.interface.chat.webchat
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  host: localhost
+  port: 8080
+  dist_path: null
+
+  websocket_host: localhost
+  websocket_port: 8088
+
+  slider_params:
+    temperature:
+      min: 0.0
+      max: 1.5
+      value: 0.95
+      step: 0.01
+
+  role_mapping:
+    user:
+      name: User
+      avatar: null
+    cerebrum:
+      name: AI
+      avatar: null
+
+  options:
+    clear_history: true
+
+  resources:
+    -
+      type: websocket_client

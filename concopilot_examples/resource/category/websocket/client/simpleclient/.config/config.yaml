@@ -1,0 +1,32 @@
+group_id: org.concopilot.example.resource.websocket.client
+artifact_id: simple-websocket-client
+version: 0.0.0
+
+type: resource
+as_plugin: false
+
+resource_type: websocket_client
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.2
+    - websockets
+  package: concopilot_examples.resource.category.websocket.client.simpleclient
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  host: localhost
+  port: 80
+  ssl_cert_path: null

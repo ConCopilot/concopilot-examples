@@ -1,0 +1,41 @@
+group_id: org.concopilot.example.openai
+artifact_id: openai-model
+version: 0.0.1
+
+type: resource
+as_plugin: false
+
+resource_type: model
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.2
+    - openai>=1.0.0
+  package: concopilot_examples.resource.category.model.openaimodel
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  # id: default
+  # name: null
+  api_type: openai
+  base_url: https://api.openai.com/v1
+  api_version: 2023-05-15
+  # api_key: <api_key>
+  # organization: <organization>
+  # api_key_secret_name: OPENAI_API_KEY
+  model: gpt-3.5-turbo
+  base_model_name: gpt-3.5-turbo
+  force_chat: true
+  num_retries: 10

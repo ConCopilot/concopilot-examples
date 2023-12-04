@@ -1,0 +1,37 @@
+group_id: org.concopilot.example.glm
+artifact_id: glm-basic-cerebrum
+version: 0.0.0
+
+type: cerebrum
+as_plugin: false
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.2
+  package: concopilot_examples.cerebrum.glmcerebrum
+
+url:
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  # id: default
+  name: GLM
+  role: AI-Assistant
+  max_tokens: 8192
+  instruction_file: instruction.md
+  msg_retrieval_mode: INNER
+
+  resources:
+    -
+      type: model
+      id: default

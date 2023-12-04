@@ -1,0 +1,101 @@
+group_id: org.concopilot.example.copilot
+artifact_id: basic-chat-copilot
+version: 0.0.0
+
+type: copilot
+as_plugin: false
+
+setup:
+  pip:
+    - concopilot>=0.0.2
+  package: concopilot.basic.copilot
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  resource_manager:
+    group_id: org.concopilot.basic.resource.manager
+    artifact_id: basic-resource-manager
+    version: 0.0.0
+    config:
+      resources:
+        -
+          group_id: org.concopilot.example.glm
+          artifact_id: glm-basic-model
+          version: 0.0.0
+          config:
+            model_repo:
+              local:
+                repo_dir: null
+              huggingface:
+                repo_id: THUDM/chatglm3-6b
+                repo_dir: .hf_repo
+              modelscope:
+                model_id: ZhipuAI/chatglm3-6b
+                repo_dir: .ms_repo
+                revision: v1.0.0
+            transformers:
+              auto_tokenizer:
+                trust_remote_code: true
+              auto_model:
+                trust_remote_code: true
+                device: cuda
+        -
+          group_id: org.concopilot.basic.resource.category
+          artifact_id: disk
+          version: 0.0.0
+
+  cerebrum:
+    group_id: org.concopilot.example.glm
+    artifact_id: glm-basic-cerebrum
+    version: 0.0.0
+
+  interactor:
+    group_id: org.concopilot.example
+    artifact_id: chat-interactor
+    version: 0.0.1
+    config:
+      persist_history: false
+      exit_tokens:
+        - exit
+
+  plugin_manager:
+    group_id: org.concopilot.basic.plugin.manager
+    artifact_id: basic-plugin-manager
+    version: 0.0.0
+    config:
+      plugin_prompt_generator:
+        group_id: org.concopilot.example
+        artifact_id: lm-plugin-prompt-gen
+        version: 0.0.0
+      plugins: []
+
+  message_manager:
+    group_id: org.concopilot.basic.message.manager
+    artifact_id: basic-str-msg-manager
+    version: 0.0.0
+
+  storage:
+    group_id: org.concopilot.basic.storage
+    artifact_id: disk-storage
+    version: 0.0.0
+
+  user_interface:
+    group_id: org.concopilot.basic.interface
+    artifact_id: cmd-user-interface
+    version: 0.0.1
+    config:
+      user_msg_prefix: "USER:"
+      non_user_msg_prefix: "ASSISTANT:"
+      multiple_line_input: false

@@ -1,0 +1,24 @@
+[project]
+name="concopilot_examples"
+version="0.0.2"
+authors=[
+    {name="ZHONG Weikun", email="zhong.weikun@live.com"}
+]
+description="ConCopilot simple examples."
+readme="README.md"
+requires-python=">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies=[
+    "concopilot>=0.0.1"
+]
+
+[project.urls]
+"Homepage"="https://github.com/ConCopilot/concopilot-examples"
+"Bug Tracker"="https://github.com/ConCopilot/concopilot-examples/issues"
+
+[tool.setuptools.packages.find]
+where=["."]
+include=["concopilot_examples*"]
