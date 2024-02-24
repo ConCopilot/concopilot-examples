@@ -1,5 +1,5 @@
-group_id: org.concopilot.example
-artifact_id: lm-plugin-prompt-gen
+group_id: org.concopilot.example.plugin_prompt_gen
+artifact_id: yaml-plugin-prompt-gen
 version: 0.0.0
 
 type: plugin_prompt_generator
@@ -7,9 +7,9 @@ as_plugin: false
 
 setup:
   pip:
-    - concopilot_examples
+    - concopilot_examples>=0.0.3
     - PyYaml
-  package: concopilot_examples.plugin.promptgenerator
+  package: concopilot_examples.plugin.promptgenerator.yamlgen
 
 url: https://github.com/concopilot/concopilot
 
@@ -27,9 +27,3 @@ licenses:
 config:
   #id: default
   #name: null
-  instruction_file: instruction.md
-
-  resources:
-    -
-      type: model
-      id: default

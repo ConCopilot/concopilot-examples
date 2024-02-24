@@ -7,21 +7,14 @@ from typing import Dict
 
 from concopilot.framework.plugin import Plugin, PluginPromptGenerator
 from concopilot.framework.resource.category import LLM
-
-
-class YamlDumper(yaml.SafeDumper):
-    pass
-
-
-YamlDumper.add_representer(uuid.UUID, lambda dumper, data : dumper.represent_str(str(data)))
-YamlDumper.add_multi_representer(dict, YamlDumper.represent_dict)
+from concopilot.util.yamls import YamlDumper
 
 
 class LanguageModelPluginPromptGenerator(PluginPromptGenerator):
     def __init__(self, config: Dict):
         super(LanguageModelPluginPromptGenerator, self).__init__(config)
         self._model: LLM = None
-        with open(self.config_file_path(self.config.config.instruction_file)) as file:
+        with open(self.config_file_path(self.config.config.instruction_file), encoding='utf8') as file:
             self.instruction: str = file.read()
 
     @property

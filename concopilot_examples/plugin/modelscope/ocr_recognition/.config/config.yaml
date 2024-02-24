@@ -1,0 +1,97 @@
+group_id: org.concopilot.example.modelscope.plugin
+artifact_id: ocr_recognition
+version: 0.0.0
+
+type: plugin
+as_plugin: true
+
+info:
+  title: ModelScopeOCRRecognition
+  description: "This plugin provides an API to recognize text from an image or an image list. This recognition is usually considered as a sub-task in an Optical Character Recognition (OCR) task."
+  description_for_model: "You can use this API to recognize text from one or more input images."
+commands:
+  -
+    command_name: recognize
+    description: "Recognize text from the input image or image list.
+                  All input parameters are optional, but there must be at least one valid parameter representing an image or image list."
+    parameter:
+      type:
+        img_data:
+          type: Union[numpy.ndarray, PIL.Image.Image]
+          description: the input image data. It can be represented in either python `PIL.Image.Image` or `numpy.ndarray`.
+          required: false
+          asset_ref_acceptable: true
+        img_url:
+          type: str
+          description: the url of the input image.
+          required: false
+        img_path:
+          type: str
+          description: the storage path of the input image.
+          required: false
+        img_data_list:
+          type: List[Union[numpy.ndarray, PIL.Image.Image]]
+          description: the input image data list. Each element represents an image and can be in either python `PIL.Image.Image` or `numpy.ndarray`.
+          required: false
+          asset_ref_acceptable: true
+        img_url_list:
+          type: List[str]
+          description: the url list of the input images.
+          required: false
+          asset_ref_acceptable: true
+        img_path_list:
+          type: List[str]
+          description: the storage path list of the input images.
+          required: false
+          asset_ref_acceptable: true
+      asset_ref_acceptable: true
+    response:
+      type:
+        result:
+          type:
+            _type_ref: ocr_recognize_response_element
+            text:
+              type: List[str]
+              description: a list of the recognized texts.
+              optional: false
+          description: The recognition result. If there is only one non-list parameter passed, this recognition result will be returned.
+          optional: true
+        result_list:
+          type: List[ocr_recognize_response_element]
+          description: "The result list represents the recognition results.
+                        If there are multiple inputs, this result list will be returned with each element a Dict and represents the result to the corresponded input.
+                        The order of the list will be the same to the combination of all types of inputs one by one,
+                        that is, [`img_data`, `img_url`, `img_path`]+[each element in `img_data_list`]+[each element in `img_url_list`]+[each element in `img_path_list`]."
+          optional: true
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.3
+    - modelscope
+    - torch
+    - transformers
+    - sentencepiece
+    - opencv-python
+  package: concopilot_examples.plugin.modelscope.ocr_recognition
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  #id: default
+  #name: null
+
+  resources:
+    -
+      type: model
+      name: ocr_recognition

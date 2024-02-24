@@ -1,0 +1,141 @@
+group_id: org.concopilot.example.copilot
+artifact_id: basic-chat-with-tool-copilot
+version: 0.0.0
+
+type: copilot
+as_plugin: false
+
+setup:
+  pip:
+    - concopilot>=0.0.3
+  package: concopilot.basic.copilot
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  resource_manager:
+    group_id: org.concopilot.basic.resource.manager
+    artifact_id: basic-resource-manager
+    version: 0.0.0
+    config:
+      resources:
+        -
+          group_id: org.concopilot.example.openai
+          artifact_id: openai-model
+          version: 0.0.1
+          config:
+            resource_type: model
+            # id: default
+            # name: null
+            api_type: openai
+            base_url: https://api.openai.com/v1
+            api_version: 2023-05-15
+            # api_key: <api_key>
+            # organization: <organization>
+            # api_key_secret_name: OPENAI_API_KEY
+            model: gpt-3.5-turbo
+            base_model_name: gpt-3.5-turbo
+            force_chat: true
+            num_retries: 10
+        -
+          group_id: org.concopilot.basic.resource.category
+          artifact_id: disk
+          version: 0.0.0
+        -
+          group_id: org.concopilot.example.resource.websocket.server
+          artifact_id: simple-websocket-server
+          version: 0.0.0
+          config:
+            host: localhost
+            port: 8088
+        -
+          group_id: org.concopilot.example.resource.websocket.client
+          artifact_id: simple-websocket-client
+          version: 0.0.0
+          config:
+            host: localhost
+            port: 8088
+        -
+          group_id: org.concopilot.example.resource.http.server
+          artifact_id: simple-http-server
+          version: 0.0.0
+          config:
+            host: localhost
+            port: 8080
+            directory: .user_interface_fe
+
+  cerebrum:
+    group_id: org.concopilot.example.openai
+    artifact_id: openai-cerebrum
+    version: 0.0.2
+    config:
+      max_tokens: null
+      msg_retrieval_mode: ALL
+
+  interactor:
+    group_id: org.concopilot.example
+    artifact_id: chat-with-tool-interactor
+    version: 0.0.0
+    config:
+      persist_history: false
+      verbose: true
+      wait_user_comment: false
+      exit_tokens:
+        - exit
+
+  plugin_manager:
+    group_id: org.concopilot.basic.plugin.manager
+    artifact_id: basic-plugin-manager
+    version: 0.0.0
+    config:
+      plugin_prompt_generator:
+        group_id: org.concopilot.example.plugin_prompt_gen
+        artifact_id: yaml-plugin-prompt-gen
+        version: 0.0.0
+      plugins: [] # Add plugin list here
+
+  message_manager:
+    group_id: org.concopilot.basic.message.manager
+    artifact_id: basic-json-msg-manager
+    version: 0.0.0
+
+  storage:
+    group_id: org.concopilot.basic.storage
+    artifact_id: disk-storage
+    version: 0.0.1
+
+  user_interface:
+    group_id: org.concopilot.example.interface.chat
+    artifact_id: simple-web-chat-user-interface
+    version: 0.0.1
+    config:
+      dist_path: .user_interface_fe
+      websocket_host: localhost
+      websocket_port: 8088
+
+      slider_params:
+        temperature:
+          min: 0.0
+          max: 1.5
+          value: 0.95
+          step: 0.01
+
+      role_mapping:
+        user:
+          name: User
+          avatar: null
+
+      options:
+        retrieve_history: true
+        clear_history: true

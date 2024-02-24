@@ -1,0 +1,37 @@
+group_id: org.concopilot.example.modelscope.model
+artifact_id: pipeline
+version: 0.0.0
+
+type: resource
+as_plugin: false
+
+resource_type: model
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.3
+    - modelscope
+  package: concopilot_examples.resource.category.model.modelscope.pipeline
+
+url:
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  # id: default
+  # name: null
+
+  pipeline_params:
+    task: <task>
+    model: <model>
+
+  inference_defaults:

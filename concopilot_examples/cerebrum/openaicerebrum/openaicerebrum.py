@@ -2,7 +2,6 @@
 
 import json
 import logging
-import time
 
 from typing import Dict, Tuple, Optional
 
@@ -10,6 +9,7 @@ from concopilot.framework.plugin import Plugin, PluginManager
 from concopilot.framework.cerebrum import InteractParameter, InteractResponse, AbstractCerebrum
 from concopilot.framework.resource.category.model import LLM
 from concopilot.framework.message import Message
+from concopilot.util.context import Asset
 from concopilot.util import ClassDict
 from concopilot.util.jsons import JsonEncoder
 
@@ -23,7 +23,8 @@ class OpenAICerebrum(AbstractCerebrum):
         self._model: LLM = None
         self.max_tokens: int = self.config.config.max_tokens
         self.msg_retrieval_mode: Message.RetrievalMode = Message.RetrievalMode[self.config.config.msg_retrieval_mode.upper()]
-        self._instruction_prompt: str = f'Make your response less than {self.max_tokens} tokens.' if self.max_tokens>0 else None
+        self.instruction_prompt_role: str = self.config.config.instruction_prompt_role if self.config.config.instruction_prompt_role else 'system'
+        self._instruction_prompt: str = f'Make your response less than {self.max_tokens} tokens.' if (self.max_tokens is not None and self.max_tokens>0) else None
         self._plugin_prompt: str = None
         self._functions=[]
         self._function_plugin_map: Dict[str, Tuple[str, str]] = {}
@@ -38,12 +39,13 @@ class OpenAICerebrum(AbstractCerebrum):
                 for plugin in plugin_manager.plugins:
                     if not self.create_plugin_function(plugin):
                         self._function_failed_plugins[plugin.name]=plugin
-                if len(self._function_failed_plugins)>0:
-                    with open(self.config_file_path(self.config.config.instruction_file)) as file:
+                if len(self._function_failed_plugins)>0 and self.config.config.instruction_file:
+                    with open(self.config_file_path(self.config.config.instruction_file), encoding='utf8') as file:
                         self._plugin_prompt=file.read().replace('{plugins}', '\n\n'.join([plugin.prompt for plugin in self._function_failed_plugins.values()]))
             else:
-                with open(self.config_file_path(self.config.config.instruction_file)) as file:
-                    self._plugin_prompt=file.read().replace('{plugins}', plugin_manager.get_combined_prompt())
+                if self.config.config.instruction_file:
+                    with open(self.config_file_path(self.config.config.instruction_file), encoding='utf8') as file:
+                        self._plugin_prompt=file.read().replace('{plugins}', plugin_manager.get_combined_prompt())
 
     def instruction_prompt(self) -> Optional[str]:
         return self._instruction_prompt
@@ -60,20 +62,16 @@ class OpenAICerebrum(AbstractCerebrum):
         if self._plugin_prompt is not None and self._plugin_prompt.strip()!='':
             prompt+='\n\n'+self._plugin_prompt
         current_context = [
-            OpenAICerebrum.create_chat_message('system', prompt),
-            OpenAICerebrum.create_chat_message(
-                'system', f"The current time and date is {time.strftime('%c')}"
-            )
+            OpenAICerebrum.create_chat_message(self.instruction_prompt_role, prompt)
         ]
 
         if self.instruction_prompt():
-            current_context.append(OpenAICerebrum.create_chat_message('system', self.instruction_prompt()))
+            current_context.append(OpenAICerebrum.create_chat_message(self.instruction_prompt_role, self.instruction_prompt()))
 
         if param.assets is not None and len(param.assets)>0:
-            current_context.append(OpenAICerebrum.create_chat_message('system', 'Below are assets for your reference:\n\n'+json.dumps(param.assets, cls=JsonEncoder, ensure_ascii=False)))
+            current_context.append(OpenAICerebrum.create_chat_message(self.instruction_prompt_role, 'Current AssetMeta list:\n\n```json\n'+json.dumps([Asset.get_meta(asset) for asset in param.assets], cls=JsonEncoder, ensure_ascii=False, indent=4)+'\n```'))
 
         if param.message_history is not None and len(param.message_history)>0:
-            # current_context.append(OpenAICerebrum.create_chat_message('system', 'Below are the nearest interaction messages between you, plugins, and the user so far, aiming to remind you for your recent works:'))
             for msg in param.message_history:
                 if msg.sender.role=='user':
                     role='user'
@@ -98,7 +96,7 @@ class OpenAICerebrum(AbstractCerebrum):
                         'arguments': json.dumps(msg.content.param, cls=JsonEncoder, ensure_ascii=False)
                     }
                 elif role=='function':
-                    content=msg.content.data if isinstance(msg.content.data, str) else json.dumps(msg.content.data, cls=JsonEncoder, ensure_ascii=False)
+                    content=msg.content.response if isinstance(msg.content.response, str) else json.dumps(msg.content.response, cls=JsonEncoder, ensure_ascii=False)
                     name=msg.owner.name+'_'+msg.owner.command
                 else:
                     content=msg.retrieve(self.msg_retrieval_mode)
@@ -108,7 +106,7 @@ class OpenAICerebrum(AbstractCerebrum):
                 current_context.append(OpenAICerebrum.create_chat_message(role, content, function_call, name))
 
         if param.content:
-            current_context.append(OpenAICerebrum.create_chat_message('system', param.content))
+            current_context.append(OpenAICerebrum.create_chat_message('user', param.content))
 
         if param.command:
             current_context.append(OpenAICerebrum.create_chat_message('user', param.command))
@@ -148,14 +146,17 @@ class OpenAICerebrum(AbstractCerebrum):
                     properties=ClassDict(),
                     required=[]
                 )
-                for param in command.parameters:
-                    func.parameters.properties[param.name]=ClassDict(type=get_function_call_data_type(param.type))
-                    if param.description:
-                        func.parameters.properties[param.name].description=param.description
-                    if param.enum:
-                        func.parameters.properties[param.name].enum=param.enum
-                    if param.required:
-                        func.parameters.required.append(param.name)
+                if isinstance(command.parameter.type, Dict):
+                    for name, detail in command.parameter.type.items():
+                        func.parameters.properties[name]=ClassDict(type=get_function_call_data_type(detail.type))
+                        if detail.description:
+                            func.parameters.properties[name].description=detail.description
+                        if detail.enum:
+                            func.parameters.properties[name].enum=detail.enum
+                        if detail.required:
+                            func.parameters.required.append(name)
+                else:
+                    raise ValueError('OpenAI function call do not support non-mapping command parameters.')
 
                 self._functions.append(func)
                 self._function_plugin_map[func.name]=(plugin.name, command.command_name)

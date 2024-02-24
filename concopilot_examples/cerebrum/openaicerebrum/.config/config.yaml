@@ -1,13 +1,13 @@
 group_id: org.concopilot.example.openai
 artifact_id: openai-cerebrum
-version: 0.0.1
+version: 0.0.2
 
 type: cerebrum
 as_plugin: false
 
 setup:
   pip:
-    - concopilot_examples>=0.0.1
+    - concopilot_examples>=0.0.3
     - tiktoken
   package: concopilot_examples.cerebrum.openaicerebrum
 
@@ -28,10 +28,11 @@ config:
   # id: default
   name: GPT
   role: AI-Assistant
-  max_tokens: 1200
+  max_tokens: null
   use_function_call: false
   instruction_file: instruction.md # this will be ignored if the use_function_call is true, else the prompt described in this file with the full plugin list will be added into the GPT message list.
-  msg_retrieval_mode: INNER
+  msg_retrieval_mode: ALL
+  instruction_prompt_role: system # this is the "role" used to compose the instruction messages
 
   resources:
     -

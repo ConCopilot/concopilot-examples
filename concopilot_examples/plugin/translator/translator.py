@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Dict
+from typing import Dict, Any
 
 from concopilot.framework.plugin import AbstractPlugin
 from concopilot.framework.resource.category import LLM
@@ -13,7 +13,7 @@ class Translator(AbstractPlugin):
         self._model: LLM = None
         self.max_tokens: int = self.config.config.max_tokens
         assert self.config.config.instruction_file
-        with open(self.config_file_path(self.config.config.instruction_file)) as file:
+        with open(self.config_file_path(self.config.config.instruction_file), encoding='utf8') as file:
             self.instruction: str = file.read()
 
     @property
@@ -30,7 +30,7 @@ class Translator(AbstractPlugin):
         })
         return response['content']
 
-    def command(self, command_name: str, param: Dict, **kwargs) -> Dict:
+    def command(self, command_name: str, param: Any, **kwargs) -> Any:
         if command_name=='translate':
             return ClassDict(content=self.translate(
                 param['content'],

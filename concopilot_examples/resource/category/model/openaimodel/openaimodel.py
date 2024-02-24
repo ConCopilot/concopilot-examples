@@ -79,9 +79,12 @@ class OpenAILLM(LLM):
                 if result:=pattern.search(str(e)):
                     backoff=int(result.group(1))+1
                 logger.debug(f'{Fore.RED}Error: Reached rate limit, passing...{Fore.RESET}')
-            except (openai.APIError, openai.APITimeoutError) as e:
-                if e.http_status!=502:
+            except openai.APIStatusError as e:
+                if e.status_code!=502:
                     raise
+                if attempt==self.num_retries-1:
+                    raise
+            except openai.APIError as e:
                 if attempt==self.num_retries-1:
                     raise
             except ValueError:

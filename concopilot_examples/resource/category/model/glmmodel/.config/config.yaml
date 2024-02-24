@@ -1,6 +1,6 @@
 group_id: org.concopilot.example.glm
 artifact_id: glm-basic-model
-version: 0.0.0
+version: 0.0.1
 
 type: resource
 as_plugin: false
@@ -9,7 +9,7 @@ resource_type: model
 
 setup:
   pip:
-    - concopilot_examples>=0.0.2
+    - concopilot_examples>=0.0.3
     - transformers>=4.30.2
     - numpy
     - torch>=2.0
@@ -34,6 +34,7 @@ licenses:
 config:
   # id: default
   # name: null
+  default_max_tokens: 8192
 
   model_repo:
     local:
@@ -44,7 +45,6 @@ config:
     modelscope:
       model_id: ZhipuAI/chatglm3-6b
       repo_dir: .ms_repo
-      revision: v1.0.0
 
   transformers:
     auto_tokenizer:

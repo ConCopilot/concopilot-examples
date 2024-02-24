@@ -1,0 +1,57 @@
+group_id: org.concopilot.example.image
+artifact_id: image-cropper
+version: 0.0.0
+
+type: plugin
+as_plugin: true
+
+info:
+  title: ImageCropper
+  description: "This plugin provides an API to crop a bunch of sub-areas from an input image."
+  description_for_model: "You can use this API to crop a series images from the input image by specifying and passing area polygons."
+commands:
+  -
+    command_name: crop
+    description: "Crop a series images from the input image by using the passed polygons."
+    parameter:
+      type:
+        img_data:
+          type: Union[numpy.ndarray, PIL.Image.Image]
+          description: the input image data represented in `numpy.ndarray` or `PIL.Image.Image`.
+          required: true
+          asset_ref_acceptable: true
+        cut_polygons:
+          type: Union[numpy.ndarray, List[numpy.ndarray], List[List[int]], List[List[List[int]]]]
+          description: "the polygons to be cut out.
+                        It can be either (2 or 3)-dimensional numpy.ndarray or (2 or 3)-dimensional list of int,
+                        in either case the first dimension represent the individual cut areas while the remain dimension(s) represent 4 vertices of the area to be cut."
+          required: true
+          asset_ref_acceptable: true
+      asset_ref_acceptable: true
+    response:
+      type:
+        cropped:
+          type: List[numpy.ndarray]
+          description: The cropped images.
+          optional: false
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.3
+    - opencv-python
+    - numpy
+    - pillow
+  package: concopilot_examples.plugin.image.cropper
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt

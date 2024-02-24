@@ -1,0 +1,86 @@
+group_id: org.concopilot.example
+artifact_id: chat-with-tool-interactor
+version: 0.0.0
+
+type: interactor
+as_plugin: false
+
+commands:
+  -
+    command_name: set_llm_param
+    description: set parameters for the LLM
+    parameter:
+      type:
+        update:
+          type: Dict[str, Any]
+          description: The parameter name-value dict, with the keys are the parameter name, and values are the parameter values.
+          required: false
+        remove:
+          type: List[str]
+          description: The parameter list to be removed.
+          required: false
+    response:
+      type:
+        param:
+          type: Dict[str, Any]
+          description: the updated parameter dict.
+          optional: false
+  -
+    command_name: retrieve_history
+    description: retrieve the newest `max_count` chat history records
+    parameter:
+      type:
+        max_count:
+          type: int
+          description: "The maximum number of histories to retrieve.
+                        This command will return the newest chat history records in time ascending order.
+                        No more than `max_count` chat history records will be return, or the entire history list if not provided."
+          required: false
+    response:
+      type:
+        histories:
+          type: List[Message]
+          description: the returning chat history list.
+          optional: false
+  -
+    command_name: clear_history
+    description: clear the chat history.
+    parameter:
+      type: null
+    response:
+      type:
+        status:
+          type: bool
+          description: if the clearing operation success or not.
+          optional: false
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.3
+  package: concopilot_examples.interactor.chatwithtool
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  persist_history_and_asset: false
+  message_history_key: auto_task/message_history
+  message_summary_key: auto_task/message_summary
+  assets_key: auto_task/assets
+  hello_msg_content: Hello, can I help you?
+  instruction_file: instruction_with_plugin_prompt.md
+  with_plugin_prompt: true
+  verbose: false
+  wait_user_comment: false
+  exit_tokens:
+    - exit
