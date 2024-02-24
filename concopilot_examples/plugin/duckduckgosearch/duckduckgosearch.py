@@ -3,7 +3,7 @@
 import duckduckgo_search
 import json
 
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from itertools import islice
 from concopilot.framework.plugin import AbstractPlugin
@@ -24,7 +24,7 @@ class DuckDuckGoSearch(AbstractPlugin):
 
         return json.loads(json.dumps(search_results, ensure_ascii=False).encode('utf-8', 'ignore').decode('utf-8'))
 
-    def command(self, command_name: str, param: Dict, **kwargs) -> Dict:
+    def command(self, command_name: str, param: Any, **kwargs) -> Any:
         if command_name=='search':
             return ClassDict(results=self.search(param['query'], param.get('num_results')))
         else:

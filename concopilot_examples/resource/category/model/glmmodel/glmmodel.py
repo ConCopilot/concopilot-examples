@@ -2,13 +2,13 @@
 
 import pathlib
 import huggingface_hub
-import modelscope
 import logging
 import os
 import shutil
 
 from typing import Dict, Union
 
+from modelscope.hub.snapshot_download import snapshot_download, get_cache_dir
 from transformers import AutoTokenizer, AutoModel
 from concopilot.framework.resource.category import LLM
 from concopilot.package.config import Settings
@@ -26,16 +26,20 @@ class GLMModel(LLM):
         super(GLMModel, self).__init__(config)
         self.model_repo: ClassDict = self.config.config.model_repo
 
-        if self.model_repo.huggingface and self.model_repo.huggingface.repo_dir:
+        if self.model_repo.huggingface:
+            if not self.model_repo.huggingface.repo_dir:
+                self.model_repo.huggingface.repo_dir=huggingface_hub.constants.HF_HUB_CACHE
             if not os.path.isabs(self.model_repo.huggingface.repo_dir):
-                self.model_repo.huggingface.repo_dir=os.path.join(settings.working_directory, self.model_repo.huggingface.repo_dir)
+                self.model_repo.huggingface.repo_dir=str(pathlib.Path(settings.working_directory).joinpath(self.model_repo.huggingface.repo_dir))
             self.huggingface_repo_dir=self.model_repo.huggingface.repo_dir
         else:
             self.huggingface_repo_dir=None
 
-        if self.model_repo.modelscope and self.model_repo.modelscope.repo_dir:
+        if self.model_repo.modelscope:
+            if not self.model_repo.modelscope.repo_dir:
+                self.model_repo.modelscope.repo_dir=get_cache_dir()
             if not os.path.isabs(self.model_repo.modelscope.repo_dir):
-                self.model_repo.modelscope.repo_dir=os.path.join(settings.working_directory, self.model_repo.modelscope.repo_dir)
+                self.model_repo.modelscope.repo_dir=str(pathlib.Path(settings.working_directory).joinpath(self.model_repo.modelscope.repo_dir))
             self.modelscope_repo_dir=self.model_repo.modelscope.repo_dir
         else:
             self.modelscope_repo_dir=None
@@ -54,14 +58,14 @@ class GLMModel(LLM):
         if kwargs is not None:
             param.update(kwargs)
 
-        max_tokens=param.pop('max_tokens') if 'max_tokens' in param else 8192
+        max_tokens=(param.pop('max_tokens') if 'max_tokens' in param else None) or self.config.config.default_max_tokens or 8192
         require_token_len=param.pop('require_token_len') if 'require_token_len' in param else False
         require_cost=param.pop('require_cost') if 'require_cost' in param else False
 
         reply, _=self.model.chat(
             tokenizer=self.tokenizer,
             query=param.pop('prompt'),
-            history=param.pop('history'),
+            history=param.pop('history') if 'history' in param else [],
             max_length=max_tokens,
             **param
         )
@@ -75,14 +79,16 @@ class GLMModel(LLM):
     def initialize(self):
         def download_hf(download_dir):
             try:
-                huggingface_hub.Repository(local_dir=download_dir, clone_from=self.model_repo.huggingface.repo_id)
+                kwargs={k: v for k, v in self.model_repo.huggingface.items() if k not in {'repo_id', 'repo_dir'}}
+                huggingface_hub.Repository(local_dir=download_dir, clone_from=self.model_repo.huggingface.repo_id, **kwargs)
             except Exception:
                 shutil.rmtree(download_dir)
                 raise
 
         def download_ms(download_dir):
             try:
-                modelscope.snapshot_download(model_id=self.model_repo.modelscope.model_id, revision=self.model_repo.modelscope.revision, cache_dir=self.model_repo.modelscope.repo_dir)
+                kwargs={k: v for k, v in self.model_repo.modelscope.items() if k not in {'model_id', 'repo_dir'}}
+                snapshot_download(model_id=self.model_repo.modelscope.model_id, cache_dir=self.model_repo.modelscope.repo_dir, **kwargs)
             except Exception:
                 shutil.rmtree(download_dir)
                 raise
@@ -92,7 +98,7 @@ class GLMModel(LLM):
             local_dir_hf=pathlib.Path(self.huggingface_repo_dir).joinpath(self.model_repo.huggingface.repo_id) if self.huggingface_repo_dir else None
             local_dir_ms=pathlib.Path(self.modelscope_repo_dir).joinpath(self.model_repo.modelscope.model_id) if self.modelscope_repo_dir else None
             if not local_dir_hf and not local_dir_ms:
-                raise ValueError('No model repository found, must provide at lease one or local pre-downloaded path, HuggingFace repository ID, or ModelScope model ID.')
+                raise ValueError('No model repository found, must provide at lease one of local pre-downloaded path, HuggingFace repository ID, or ModelScope model ID.')
             elif local_dir_hf and local_dir_ms:
                 if not os.path.isdir(local_dir_hf) and not os.path.isdir(local_dir_ms):
                     try:
@@ -117,8 +123,7 @@ class GLMModel(LLM):
 
         logger.info(f'Loading model from "{local_dir}"')
         self.tokenizer=AutoTokenizer.from_pretrained(local_dir, **self.transformers.auto_tokenizer)
-        self.model=AutoModel.from_pretrained(local_dir, **self.transformers.auto_model)
-        self.model=self.model.eval()
+        self.model=AutoModel.from_pretrained(local_dir, **self.transformers.auto_model).eval()
 
     def finalize(self):
         pass

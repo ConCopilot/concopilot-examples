@@ -1,6 +1,6 @@
 group_id: org.concopilot.example
 artifact_id: ddg-search
-version: 0.0.0
+version: 0.0.1
 
 type: plugin
 as_plugin: true
@@ -13,28 +13,27 @@ commands:
   -
     command_name: search
     description: call the search engine to search items related to the query from the internet.
-    parameters:
-      -
-        name: query
-        type: string
-        description: the query passed to the search engine
-        required: true
-      -
-        name: num_results
-        type: int
-        description: "The max number of results the search engine should return in the response.
-                      If not passed, the num_results value in the config section of this file will be used."
-        required: false
+    parameter:
+      type:
+        query:
+          type: string
+          description: the query passed to the search engine
+          required: true
+        num_results:
+          type: int
+          description: "The max number of results the search engine should return in the response.
+                        If not passed, the num_results value in the config section of this file will be used."
+          required: false
     response:
-      -
-        name: results
-        type: List[Object]
-        description: the result list returned by the search engine.
-        optional: false
+      type:
+        results:
+          type: List[Object]
+          description: the result list returned by the search engine.
+          optional: false
 
 setup:
   pip:
-    - concopilot_examples
+    - concopilot_examples>0.0.3
     - duckduckgo_search
   package: concopilot_examples.plugin.duckduckgosearch
 

@@ -1,13 +1,13 @@
 group_id: org.concopilot.example.copilot
 artifact_id: basic-chat-copilot
-version: 0.0.1
+version: 0.0.2
 
 type: copilot
 as_plugin: false
 
 setup:
   pip:
-    - concopilot>=0.0.2
+    - concopilot>=0.0.3
   package: concopilot.basic.copilot
 
 url: https://github.com/concopilot/concopilot
@@ -78,14 +78,14 @@ config:
   cerebrum:
     group_id: org.concopilot.example.openai
     artifact_id: openai-cerebrum
-    version: 0.0.1
+    version: 0.0.2
     config:
-      use_function_call: false
+      msg_retrieval_mode: ALL
 
   interactor:
     group_id: org.concopilot.example
     artifact_id: chat-interactor
-    version: 0.0.1
+    version: 0.0.2
     config:
       persist_history: false
       exit_tokens:
@@ -97,25 +97,25 @@ config:
     version: 0.0.0
     config:
       plugin_prompt_generator:
-        group_id: org.concopilot.example
-        artifact_id: lm-plugin-prompt-gen
+        group_id: org.concopilot.example.plugin_prompt_gen
+        artifact_id: yaml-plugin-prompt-gen
         version: 0.0.0
       plugins: []
 
   message_manager:
     group_id: org.concopilot.basic.message.manager
-    artifact_id: basic-str-msg-manager
+    artifact_id: basic-json-msg-manager
     version: 0.0.0
 
   storage:
     group_id: org.concopilot.basic.storage
     artifact_id: disk-storage
-    version: 0.0.0
+    version: 0.0.1
 
   user_interface:
     group_id: org.concopilot.example.interface.chat
     artifact_id: simple-web-chat-user-interface
-    version: 0.0.0
+    version: 0.0.1
     config:
       dist_path: .user_interface_fe
       websocket_host: localhost
@@ -134,4 +134,5 @@ config:
           avatar: null
 
       options:
+        retrieve_history: true
         clear_history: true

@@ -1,6 +1,6 @@
 group_id: org.concopilot.example
 artifact_id: auto-interactor
-version: 0.0.1
+version: 0.0.2
 
 type: interactor
 as_plugin: false
@@ -9,27 +9,54 @@ commands:
   -
     command_name: set_llm_param
     description: set parameters for the LLM
-    parameters:
-      -
-        name: update
-        type: Dict[str, Any]
-        description: The parameter name-value dict, with the keys are the parameter name, and values are the parameter values.
-        required: false
-      -
-        name: remove
-        type: List[str]
-        description: The parameter list to be removed.
-        required: false
+    parameter:
+      type:
+        update:
+          type: Dict[str, Any]
+          description: The parameter name-value dict, with the keys are the parameter name, and values are the parameter values.
+          required: false
+        remove:
+          type: List[str]
+          description: The parameter list to be removed.
+          required: false
     response:
-      -
-        name: param
-        type: Dict[str, Any]
-        description: the updated parameter dict.
-        optional: false
+      type:
+        param:
+          type: Dict[str, Any]
+          description: the updated parameter dict.
+          optional: false
+  -
+    command_name: retrieve_history
+    description: retrieve the newest `max_count` chat history records
+    parameter:
+      type:
+        max_count:
+          type: int
+          description: "The maximum number of histories to retrieve.
+                        This command will return the newest chat history records in time ascending order.
+                        No more than `max_count` chat history records will be return, or the entire history list if not provided."
+          required: false
+    response:
+      type:
+        histories:
+          type: List[Message]
+          description: the returning chat history list.
+          optional: false
+  -
+    command_name: clear_history
+    description: clear the chat history.
+    parameter:
+      type: null
+    response:
+      type:
+        status:
+          type: bool
+          description: if the clearing operation success or not.
+          optional: false
 
 setup:
   pip:
-    - concopilot_examples>=0.0.1
+    - concopilot_examples>=0.0.3
   package: concopilot_examples.interactor.auto
 
 url: https://github.com/concopilot/concopilot
@@ -48,11 +75,12 @@ licenses:
 config:
   instruction_file: instruction_with_plugin_prompt.md
   with_plugin_prompt: true
-  message_history_key: message_history
-  message_summary_key: message_summary
+  message_history_key: auto_task/message_history
+  message_summary_key: auto_task/message_summary
+  assets_key: auto_task/assets
   summarize_token_len: 6500
 
   summarizer:
     group_id: org.concopilot.example
     artifact_id: summarizer
-    version: 0.0.0
+    version: 0.0.1

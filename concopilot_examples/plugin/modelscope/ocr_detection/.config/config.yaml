@@ -1,0 +1,103 @@
+group_id: org.concopilot.example.modelscope.plugin
+artifact_id: ocr_detection
+version: 0.0.0
+
+type: plugin
+as_plugin: true
+
+info:
+  title: ModelScopeOCRDetection
+  description: "This plugin provides an API to detect text areas in an image or an image list. This detection is usually considered as a sub-task in an Optical Character Recognition (OCR) task."
+  description_for_model: "You can use this API to detect areas that contain texts in one or more input images."
+commands:
+  -
+    command_name: detect
+    description: "Detect text areas in the input image or image list.
+                  All input parameters are optional, but there must be at least one valid parameter representing an image or image list."
+    parameter:
+      type:
+        img_data:
+          type: Union[numpy.ndarray, PIL.Image.Image]
+          description: the input image data. It can be represented in either python `PIL.Image.Image` or `numpy.ndarray`.
+          required: false
+          asset_ref_acceptable: true
+        img_url:
+          type: str
+          description: the url of the input image.
+          required: false
+        img_path:
+          type: str
+          description: the storage path of the input image.
+          required: false
+        img_data_list:
+          type: List[Union[numpy.ndarray, PIL.Image.Image]]
+          description: the input image data list. Each element represents an image and can be in either python `PIL.Image.Image` or `numpy.ndarray`.
+          required: false
+          asset_ref_acceptable: true
+        img_url_list:
+          type: List[str]
+          description: the url list of the input images.
+          required: false
+          asset_ref_acceptable: true
+        img_path_list:
+          type: List[str]
+          description: the storage path list of the input images.
+          required: false
+          asset_ref_acceptable: true
+      asset_ref_acceptable: true
+    response:
+      type:
+        result:
+          type:
+            _type_ref: ocr_detect_response_element
+            polygons:
+              type: numpy.ndarray
+              description: "An np.ndarray with shape (?, 8).
+                            Each row of the array represents one detected area that contains text in the correspond input,
+                            and the 8 elements in the row represents the 4 vertices of the area in the order of left-top, right-top, right-bottom, left-bottom."
+              optional: false
+          description: The detection result. If there is only one non-list parameter passed, this detection result will be returned.
+          optional: true
+        result_list:
+          type: List[ocr_detect_response_element]
+          description: "The result list represents the detection results.
+                        If there are multiple inputs, this result list will be returned with each element a Dict and represents the result to the corresponded input.
+                        The order of the list will be the same to the combination of all types of inputs one by one,
+                        that is, [`img_data`, `img_url`, `img_path`]+[each element in `img_data_list`]+[each element in `img_url_list`]+[each element in `img_path_list`]."
+          optional: true
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.3
+    - modelscope
+    - torch
+    - transformers
+    - sentencepiece
+    - opencv-python
+    - tf_slim
+    - tensorflow
+    - pyclipper
+    - shapely
+  package: concopilot_examples.plugin.modelscope.ocr_detection
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  #id: default
+  #name: null
+
+  resources:
+    -
+      type: model
+      name: ocr_detection

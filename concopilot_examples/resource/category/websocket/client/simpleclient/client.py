@@ -27,7 +27,7 @@ class SimpleWebSocketClient(Resource):
     def ping(self, data: Optional[Union[str, bytes]] = None) -> threading.Event:
         return self._conn.ping(data)
 
-    def pong(self, data: Union[str, bytes] = b"") -> None:
+    def pong(self, data: Union[str, bytes] = b'') -> None:
         self._conn.pong(data)
 
     def initialize(self):

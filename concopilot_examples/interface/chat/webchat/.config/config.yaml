@@ -1,14 +1,16 @@
 group_id: org.concopilot.example.interface.chat
 artifact_id: simple-web-chat-user-interface
-version: 0.0.0
+version: 0.0.1
 
 type: user_interface
 as_plugin: false
 
 setup:
   pip:
-    - concopilot_examples>=0.0.2
+    - concopilot_examples>=0.0.3
     - PyYAML
+    - numpy
+    - pillow
   package: concopilot_examples.interface.chat.webchat
 
 url: https://github.com/concopilot/concopilot
@@ -48,6 +50,7 @@ config:
       avatar: null
 
   options:
+    retrieve_history: true
     clear_history: true
 
   resources:
