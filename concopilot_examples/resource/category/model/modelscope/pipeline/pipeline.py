@@ -20,12 +20,8 @@ def create_tasks_mapping(mapping):
         if not attr.startswith('__'):
             value=getattr(Tasks, attr)
             if isinstance(value, str):
-                mapping[attr]=value
-                mapping[value]=value
-                mapping[attr.replace('_', '-')]=value
-                mapping[attr.replace('-', '_')]=value
-                mapping[value.replace('_', '-')]=value
-                mapping[value.replace('-', '_')]=value
+                mapping[attr.lower().replace('-', '_')]=value
+                mapping[value.lower().replace('-', '_')]=value
     return mapping
 
 
@@ -40,11 +36,10 @@ class ModelScopePipeline(Model):
         self.pipeline: Pipeline = None
 
     def inference(self, param: Dict, **kwargs) -> Dict:
-        model_input=param.pop('input')
         p=dict(self.inference_defaults)
         p.update(param)
-        if kwargs is not None:
-            p.update(kwargs)
+        p.update(kwargs)
+        model_input=p.pop('input')
 
         return ClassDict(result=self.pipeline(input=model_input, **p))
 
@@ -52,7 +47,7 @@ class ModelScopePipeline(Model):
         if len(ModelScopePipeline.tasks_mapping)==0:
             ModelScopePipeline.tasks_mapping=create_tasks_mapping(ModelScopePipeline.tasks_mapping)
 
-        self.pipeline_params.task=ModelScopePipeline.tasks_mapping[self.pipeline_params.task]
+        self.pipeline_params.task=ModelScopePipeline.tasks_mapping[self.pipeline_params.task.lower().replace('-', '_')]
         self.pipeline=pipeline(**self.pipeline_params)
         logger.info(f'ModelScope Pipeline initialized with task: `{self.pipeline_params.task}` and model: `{self.pipeline_params.model}`')
 

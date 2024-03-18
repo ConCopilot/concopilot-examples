@@ -1,6 +1,6 @@
 group_id: org.concopilot.example.copilot
-artifact_id: basic-chat-copilot
-version: 0.0.3
+artifact_id: basic-chat-with-tool-copilot
+version: 0.0.1
 
 type: copilot
 as_plugin: false
@@ -77,6 +77,33 @@ config:
             host: localhost
             port: 8080
             directory: .user_interface_fe
+        -
+          group_id: org.concopilot.example.modelscope.model
+          artifact_id: pipeline
+          version: 0.0.0
+          config:
+            name: card_detection_correction
+            pipeline_params:
+              task: card_detection_correction
+              model: damo/cv_resnet18_card_correction
+        -
+          group_id: org.concopilot.example.modelscope.model
+          artifact_id: pipeline
+          version: 0.0.0
+          config:
+            name: ocr_detection
+            pipeline_params:
+              task: ocr_detection
+              model: damo/cv_resnet18_ocr-detection-db-line-level_damo
+        -
+          group_id: org.concopilot.example.modelscope.model
+          artifact_id: pipeline
+          version: 0.0.0
+          config:
+            name: ocr_recognition
+            pipeline_params:
+              task: ocr_recognition
+              model: damo/cv_convnextTiny_ocr-recognition-general_damo
 
   cerebrum:
     group_id: org.concopilot.example.glm
@@ -87,10 +114,12 @@ config:
 
   interactor:
     group_id: org.concopilot.example
-    artifact_id: chat-interactor
-    version: 0.0.3
+    artifact_id: chat-with-tool-interactor
+    version: 0.0.1
     config:
       persist_history: false
+      verbose: true
+      wait_user_comment: false
       exit_tokens:
         - exit
 
@@ -103,7 +132,38 @@ config:
         group_id: org.concopilot.example.plugin_prompt_gen
         artifact_id: yaml-plugin-prompt-gen
         version: 0.0.0
-      plugins: []
+      plugins:
+        -
+          group_id: org.concopilot.example.modelscope.plugin
+          artifact_id: card_detection_correction
+          version: 0.0.0
+          config:
+            resources:
+              -
+                type: model
+                name: card_detection_correction
+        -
+          group_id: org.concopilot.example.modelscope.plugin
+          artifact_id: ocr_detection
+          version: 0.0.0
+          config:
+            resources:
+              -
+                type: model
+                name: ocr_detection
+        -
+          group_id: org.concopilot.example.modelscope.plugin
+          artifact_id: ocr_recognition
+          version: 0.0.0
+          config:
+            resources:
+              -
+                type: model
+                name: ocr_recognition
+        -
+          group_id: org.concopilot.example.image
+          artifact_id: image-cropper
+          version: 0.0.0
 
   message_manager:
     group_id: org.concopilot.basic.message.manager

@@ -8,7 +8,7 @@ from typing import Dict, List, Union, Any
 
 from PIL import Image
 from concopilot.framework.plugin import AbstractPlugin
-from concopilot.util.context import AssetRef
+from concopilot.framework.asset import AssetRef
 from concopilot.util import ClassDict
 
 
@@ -36,20 +36,20 @@ class ImageCopper(AbstractPlugin):
             img_data=np.asarray(img_data)
         cut_polygons=np.array(cut_polygons).reshape([-1, 4, 2])
 
-        corpped=[]
-        for corp_area in cut_polygons:
-            rect=cv2.boundingRect(corp_area)
+        cropped=[]
+        for crop_area in cut_polygons:
+            rect=cv2.boundingRect(crop_area)
             x, y, w, h=rect
-            corpped.append(img_data[y:y+h, x:x+w].copy())
-        return corpped
+            cropped.append(img_data[y:y+h, x:x+w].copy())
+        return cropped
 
     def command(self, command_name: str, param: Any, **kwargs) -> Any:
         if command_name=='crop':
             param=AssetRef.try_retrieve(param, self.context.assets)
-            corpped=self.crop(
+            cropped=self.crop(
                 param.get('img_data'),
                 param.get('cut_polygons')
             )
-            return ClassDict(corpped=corpped)
+            return ClassDict(cropped=cropped)
         else:
             raise ValueError(f'Unknown command: {command_name}. Only "crop" is acceptable.')

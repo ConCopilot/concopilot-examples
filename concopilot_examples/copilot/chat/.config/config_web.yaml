@@ -1,13 +1,13 @@
 group_id: org.concopilot.example.copilot
 artifact_id: basic-chat-copilot
-version: 0.0.2
+version: 0.0.3
 
 type: copilot
 as_plugin: false
 
 setup:
   pip:
-    - concopilot>=0.0.3
+    - concopilot>=0.0.4
   package: concopilot.basic.copilot
 
 url: https://github.com/concopilot/concopilot
@@ -78,14 +78,14 @@ config:
   cerebrum:
     group_id: org.concopilot.example.openai
     artifact_id: openai-cerebrum
-    version: 0.0.2
+    version: 0.0.3
     config:
       msg_retrieval_mode: ALL
 
   interactor:
     group_id: org.concopilot.example
     artifact_id: chat-interactor
-    version: 0.0.2
+    version: 0.0.3
     config:
       persist_history: false
       exit_tokens:
@@ -115,7 +115,7 @@ config:
   user_interface:
     group_id: org.concopilot.example.interface.chat
     artifact_id: simple-web-chat-user-interface
-    version: 0.0.1
+    version: 0.0.2
     config:
       dist_path: .user_interface_fe
       websocket_host: localhost

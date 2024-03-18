@@ -1,6 +1,6 @@
-group_id: org.concopilot.example.rwkv
-artifact_id: rwkv-cerebrum
-version: 0.0.3
+group_id: org.concopilot.example.zhipuai
+artifact_id: zhipuai-cerebrum
+version: 0.0.0
 
 type: cerebrum
 as_plugin: false
@@ -8,7 +8,7 @@ as_plugin: false
 setup:
   pip:
     - concopilot_examples>=0.0.4
-  package: concopilot_examples.cerebrum.rwkvcerebrum
+  package: concopilot_examples.cerebrum.zhipuaicerebrum
 
 url: https://github.com/concopilot/concopilot
 
@@ -25,11 +25,13 @@ licenses:
 
 config:
   # id: default
-  name: Bob
+  name: GLM
   role: AI-Assistant
   max_tokens: null
-  instruction_file: null
+  use_tool_call: false
+  instruction_file: null # this will be ignored if the use_function_call is true, else the prompt described in this file with the full plugin list will be added into the GPT message list.
   msg_retrieval_mode: ALL
+  instruction_prompt_role: system # this is the "role" used to compose the instruction messages
   flatten_asset_meta: true
 
   resources:

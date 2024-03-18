@@ -58,11 +58,13 @@ class OpenAILLM(LLM):
                     completion=self.client.chat.completions.create(**param)
                     message=completion.choices[0].message
                     response=LLM.LLMResponse(content=message.content, role=message.role)
-                    if 'function_call' in message:
-                        response.function_call=ClassDict(
-                            name=message.function_call.name,
-                            arguments=message.function_call.arguments
-                        )
+                    if message.function_call:
+                        response.calls=[
+                            ClassDict(
+                                name=message.function_call.name,
+                                arguments=message.function_call.arguments
+                            )
+                        ]
                 elif 'prompt' in param:
                     completion=self.client.completions.create(**param)
                     response=LLM.LLMResponse(content=completion.choices[0].text)

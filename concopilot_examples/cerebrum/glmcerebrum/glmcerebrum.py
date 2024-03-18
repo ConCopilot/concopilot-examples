@@ -8,7 +8,7 @@ from concopilot.framework.plugin import PluginManager
 from concopilot.framework.cerebrum import InteractParameter, InteractResponse, AbstractCerebrum
 from concopilot.framework.resource.category.model import LLM
 from concopilot.framework.message import Message
-from concopilot.util.context import Asset
+from concopilot.framework.asset import Asset
 from concopilot.util.jsons import JsonEncoder
 
 
@@ -46,7 +46,11 @@ class GLMCerebrum(AbstractCerebrum):
             instruction_list.append(self.instruction_prompt())
 
         if param.assets is not None and len(param.assets)>0:
-            instruction_list.append('Current AssetMeta list:\n\n```json\n'+json.dumps([Asset.get_meta(asset) for asset in param.assets], cls=JsonEncoder, ensure_ascii=False, indent=4)+'\n```')
+            if self.config.config.flatten_asset_meta:
+                asset_meta_list=[Asset.get_meta(asset).flatten(sep='/', keep_container_type=True) for asset in param.assets]
+            else:
+                asset_meta_list=[Asset.get_meta(asset) for asset in param.assets]
+            instruction_list.append('Current AssetMeta list:\n\n```json\n'+json.dumps(asset_meta_list, cls=JsonEncoder, ensure_ascii=False, indent=4)+'\n```')
 
         history=[]
         if len(instruction_list)>0:

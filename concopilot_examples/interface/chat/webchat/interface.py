@@ -14,7 +14,8 @@ from typing import Dict, Optional
 
 from concopilot.framework.interface import UserInterface
 from concopilot.framework.message import Message
-from concopilot.util.context import AssetRef
+from concopilot.framework.asset import AssetRef
+from concopilot.framework.asset import asset_regex
 from concopilot.util.jsons import JsonEncoder
 from concopilot.util.yamls import YamlDumper
 from concopilot.util import ClassDict
@@ -22,10 +23,6 @@ from ....util import images
 
 
 logger=logging.getLogger(__file__)
-
-
-asset_ref_pattern_img=re.compile(r'(!\[.*])\((.*)\)')
-asset_ref_pattern=re.compile(r'<\|(.*)\|>')
 
 
 class WebChatUserInterface(UserInterface):
@@ -77,8 +74,24 @@ class WebChatUserInterface(UserInterface):
         return self._msg
 
     def send_msg_user(self, msg: Message):
-        msg=json.dumps(msg, cls=JsonEncoder, ensure_ascii=False)
-        msg=self._check_asset_refs(msg)
+        if msg.sender and msg.sender.role=='interactor' and msg.content_type=='command' and msg.content and msg.content.command=='retrieve_history' and msg.content.response:
+            histories=msg.content.response.histories
+            msg.content.response.histories=[]
+            self._send_msg_user_single(msg)
+            for m in histories:
+                self._send_msg_user_single(m)
+        else:
+            self._send_msg_user_single(msg)
+
+    def _send_msg_user_single(self, msg: Message):
+        if not msg.id and self.config.config.add_msg_id:
+            msg.id=uuid.uuid4()
+        if msg.content_type and ((content_type:=msg.content_type.strip()).startswith('image/') or content_type=='image' or content_type=='img'):
+            msg.content=WebChatUserInterface._convert_img_src(AssetRef.try_retrieve(msg.content, self.context.assets))
+            msg=json.dumps(msg, cls=JsonEncoder, ensure_ascii=False)
+        else:
+            msg=json.dumps(msg, cls=JsonEncoder, ensure_ascii=False)
+            msg='```'.join([(self._check_asset_refs(x) if idx%2==0 else x) for idx, x in enumerate(msg.split('```'))])
         self.websocket.send(msg)
 
     def on_msg_user(self, msg: Message) -> Optional[Message]:
@@ -107,54 +120,46 @@ class WebChatUserInterface(UserInterface):
         return msg
 
     def _check_asset_refs(self, inputs: str):
-        inputs=asset_ref_pattern_img.sub(self._convert_from_asset_ref_image, inputs)
-        inputs=asset_ref_pattern.sub(self._convert_from_asset_ref, inputs)
+        inputs=asset_regex.asset_ref_img_markdown_embedding_pattern.sub(self._convert_from_asset_ref_img_markdown, inputs)
+        inputs=asset_regex.asset_ref_common_embedding_pattern.sub(self._convert_from_asset_ref, inputs)
         return inputs
 
-    def _convert_from_asset_ref_image(self, match_obj: re.Match):
-        try:
-            img_src=match_obj.group(2).strip()
-            if img_src.startswith('<|') and img_src.endswith('|>'):
-                img_src=img_src[2:-2].strip()
+    @staticmethod
+    def _try_convert_asset_ref(data: str):
+        if data.startswith('{') and data.endswith('}'):
+            data=json.loads(data)
+        return AssetRef.try_convert(data)
 
-            if img_src.startswith('asset://'):
-                img_src=AssetRef.try_retrieve(img_src, self.context.assets)
-            elif img_src.startswith('{') and img_src.endswith('}'):
-                img_src=json.loads(img_src)
-                if asset_ref:=AssetRef.try_convert(img_src):
-                    img_src=asset_ref.retrieve(self.context.assets)
-                else:
-                    return match_obj.group(0)
+    @staticmethod
+    def _convert_img_src(img_src):
+        if isinstance(img_src, Image.Image):
+            return images.pillow_image_to_data_url(img_src)
+        elif isinstance(img_src, np.ndarray):
+            return images.ndarray_image_to_data_url(img_src)
+        else:
+            return str(img_src)
+
+    def _convert_from_asset_ref_img_markdown(self, match_obj: re.Match):
+        try:
+            img_src=match_obj.group(2)
+            if asset_ref:=WebChatUserInterface._try_convert_asset_ref(img_src):
+                img_src=asset_ref.retrieve(self.context.assets)
+                img_src=WebChatUserInterface._convert_img_src(img_src)
+                return f'{match_obj.group(1)}({img_src})'
             else:
                 return match_obj.group(0)
-
-            if isinstance(img_src, Image.Image):
-                img_src=images.pillow_image_to_data_url(img_src)
-            elif isinstance(img_src, np.ndarray):
-                img_src=images.ndarray_image_to_data_url(img_src)
-            else:
-                img_src=str(img_src)
-
-            return f'{match_obj.group(1)}({img_src})'
         except Exception as e:
             logger.error('AssetRef error during converting to a Markdown Image.', exc_info=e)
             return match_obj.group(0)
 
     def _convert_from_asset_ref(self, match_obj: re.Match):
         try:
-            data=match_obj.group(1).strip()
-            if data.startswith('asset://'):
-                data=AssetRef.try_retrieve(data, self.context.assets)
-            elif data.startswith('{') and data.endswith('}'):
-                data=json.loads(data)
-                if asset_ref:=AssetRef.try_convert(data):
-                    data=asset_ref.retrieve(self.context.assets)
-                else:
-                    return match_obj.group(0)
+            data=match_obj.group(1)
+            if asset_ref:=WebChatUserInterface._try_convert_asset_ref(data):
+                data=asset_ref.retrieve(self.context.assets)
+                return str(data)
             else:
                 return match_obj.group(0)
-
-            return str(data)
         except Exception as e:
             logger.error('AssetRef error during converting.', exc_info=e)
             return match_obj.group(0)

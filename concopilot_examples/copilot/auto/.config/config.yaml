@@ -1,13 +1,13 @@
 group_id: org.concopilot.example.copilot
 artifact_id: basic-auto-copilot
-version: 0.0.2
+version: 0.0.3
 
 type: copilot
 as_plugin: false
 
 setup:
   pip:
-    - concopilot>=0.0.3
+    - concopilot>=0.0.4
   package: concopilot.basic.copilot
 
 url: https://github.com/concopilot/concopilot
@@ -56,7 +56,7 @@ config:
   cerebrum:
     group_id: org.concopilot.example.openai
     artifact_id: openai-cerebrum
-    version: 0.0.2
+    version: 0.0.3
     config:
       use_function_call: false
       msg_retrieval_mode: ALL
@@ -64,7 +64,7 @@ config:
   interactor:
     group_id: org.concopilot.example
     artifact_id: auto-interactor
-    version: 0.0.2
+    version: 0.0.3
     config:
       instruction_file: instruction_with_plugin_prompt.md
       with_plugin_prompt: true
