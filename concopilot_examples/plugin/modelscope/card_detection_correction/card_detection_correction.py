@@ -5,7 +5,7 @@ import logging
 from typing import Dict, List, Generator, Union, Any
 from concopilot.framework.plugin import AbstractPlugin
 from concopilot.framework.resource.category import Model
-from concopilot.util.context import AssetRef
+from concopilot.framework.asset import AssetRef
 from concopilot.util import ClassDict
 
 

@@ -1,13 +1,13 @@
 group_id: org.concopilot.example.glm
 artifact_id: glm-basic-cerebrum
-version: 0.0.1
+version: 0.0.2
 
 type: cerebrum
 as_plugin: false
 
 setup:
   pip:
-    - concopilot_examples>=0.0.3
+    - concopilot_examples>=0.0.4
   package: concopilot_examples.cerebrum.glmcerebrum
 
 url:
@@ -28,8 +28,9 @@ config:
   name: GLM
   role: AI-Assistant
   max_tokens: null
-  instruction_file: instruction.md
+  instruction_file: null
   msg_retrieval_mode: ALL
+  flatten_asset_meta: true
 
   resources:
     -

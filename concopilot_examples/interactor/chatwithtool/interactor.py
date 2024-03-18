@@ -11,8 +11,8 @@ from concopilot.framework.resource import ResourceManager
 from concopilot.framework.cerebrum import InteractParameter, Cerebrum
 from concopilot.framework.message import Message
 from concopilot.framework.message.manager import MessageManager
-from concopilot.util.context import Asset, AssetRef
-from concopilot.util.identity import Identity
+from concopilot.framework.asset import Asset, AssetRef
+from concopilot.framework.identity import Identity
 from concopilot.util.jsons import JsonEncoder
 from concopilot.util import ClassDict
 from concopilot import Settings
@@ -64,14 +64,9 @@ class ChatWithToolInteractor(BasicInteractor):
                 .replace('{ai_role}', self.cerebrum.role)\
                 .replace('{ai_id}', str(self.cerebrum.id))
 
-            if self.config.config.with_plugin_prompt:
-                instruction=instruction.replace('{plugins}', self.plugin_manager.get_combined_prompt())
+            instruction=instruction.replace('{plugins}', self.plugin_manager.get_combined_prompt())
 
             self.instructions.append(instruction)
-
-    def setup_plugins(self):
-        if not self.config.config.with_plugin_prompt:
-            self.cerebrum.setup_plugins(self.plugin_manager)
 
     def interact_loop(self):
         if self.persist_history_and_asset:
@@ -139,9 +134,10 @@ class ChatWithToolInteractor(BasicInteractor):
                             receiver=Identity(role='cerebrum', id=self.cerebrum.id, name=self.cerebrum.name),
                             content_type="<class 'dict'>",
                             content=ClassDict(
-                                error=e.__class__.__name__,
+                                error=type(e).__name__,
                                 detail=str(e)
-                            )
+                            ),
+                            time=settings.current_time()
                         )
                         self.message_history.append(msg)
                         if self.verbose:
@@ -159,9 +155,10 @@ class ChatWithToolInteractor(BasicInteractor):
                     receiver=Identity(role='user'),
                     content_type="<class 'dict'>",
                     content=ClassDict(
-                        error=e.__class__.__name__,
+                        error=type(e).__name__,
                         detail=str(e)
-                    )
+                    ),
+                    time=settings.current_time()
                 )
                 self.message_history.append(msg)
                 self._check_and_send_msg_to_user(msg)
@@ -173,7 +170,7 @@ class ChatWithToolInteractor(BasicInteractor):
         if msg.content and not Asset.is_trivial(msg.content):
             asset=Asset(
                 asset_type=f'message content from `{msg.sender if isinstance(msg.sender, str) else "::".join([msg.sender.role, msg.sender.name])}`',
-                content_type=str(msg.content.__class__),
+                content_type=str(type(msg.content)),
                 content=msg.content
             )
             msg.content_type='asset_ref'
@@ -284,6 +281,17 @@ class ChatWithToolInteractor(BasicInteractor):
             msg.sender=Identity(role='cerebrum', id=self.cerebrum.id, name=self.cerebrum.name)
             if msg.receiver is None:
                 msg.receiver=Identity(role='user')
+        if len(msg_list)==0:
+            msg_list.append(Message(
+                sender=Identity(role='system'),
+                receiver=Identity(role='user'),
+                content_type="<class 'dict'>",
+                content=ClassDict(
+                    error='NoResponseMessage',
+                    detail='The cerebrum does not return any message.'
+                ),
+                time=settings.current_time()
+            ))
         self.message_history.extend(msg_list)
         return msg_list
 
@@ -319,7 +327,7 @@ class ChatWithToolInteractor(BasicInteractor):
         if command_name=='set_llm_param':
             return ClassDict(param=self.set_llm_param(param.get('update'), param.get('remove')))
         elif command_name=='retrieve_history':
-            return ClassDict(histories=self.retrieve_history(param.get('max_count')))
+            return ClassDict(histories=self.retrieve_history(param.get('max_count') if param else None))
         elif command_name=='clear_history':
             return ClassDict(status=self.clear_history())
         else:

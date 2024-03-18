@@ -1,0 +1,42 @@
+group_id: org.concopilot.example.zhipuai
+artifact_id: zhipuai-model
+version: 0.0.0
+
+type: resource
+as_plugin: false
+
+resource_type: model
+
+setup:
+  pip:
+    - concopilot_examples>=0.0.4
+    - zhipuai
+  package: concopilot_examples.resource.category.model.zhipuaimodel
+
+url: https://github.com/concopilot/concopilot
+
+developers:
+  -
+    name: ZHONG Weikun
+    id: xiaoshenxian
+    url: https://github.com/xiaoshenxian
+
+licenses:
+  -
+    name: The Apache License, Version 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+config:
+  # id: default
+  # name: null
+
+  base_url: https://open.bigmodel.cn/api/paas/v4
+  base_url_secret_name: ZHIPUAI_BASE_URL
+  api_key: null
+  api_key_secret_name: ZHIPUAI_API_KEY
+  timeout: null
+  max_retries: 3
+  custom_headers: {}
+
+  model: glm-4
+  default_chat_param: {}

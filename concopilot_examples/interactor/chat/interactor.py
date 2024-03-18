@@ -10,7 +10,7 @@ from concopilot.framework.resource import ResourceManager
 from concopilot.framework.cerebrum import InteractParameter, Cerebrum
 from concopilot.framework.message import Message
 from concopilot.framework.message.manager import MessageManager
-from concopilot.util.identity import Identity
+from concopilot.framework.identity import Identity
 from concopilot.util import ClassDict
 from concopilot import Settings
 
@@ -77,9 +77,10 @@ class ChatInteractor(BasicInteractor):
                     receiver=Identity(role='user'),
                     content_type="<class 'dict'>",
                     content=ClassDict(
-                        error=e.__class__.__name__,
+                        error=type(e).__name__,
                         detail=str(e)
-                    )
+                    ),
+                    time=settings.current_time()
                 )
 
         if self.persist_history:
@@ -114,9 +115,6 @@ class ChatInteractor(BasicInteractor):
         self.message_history.append(msg)
         return msg
 
-    def setup_plugins(self):
-        pass
-
     def set_llm_param(self, update: Dict, remove: List) -> Dict:
         if update:
             self.llm_param.update(update)
@@ -140,7 +138,7 @@ class ChatInteractor(BasicInteractor):
         if command_name=='set_llm_param':
             return ClassDict(param=self.set_llm_param(param.get('update'), param.get('remove')))
         elif command_name=='retrieve_history':
-            return ClassDict(histories=self.retrieve_history(param.get('max_count')))
+            return ClassDict(histories=self.retrieve_history(param.get('max_count') if param else None))
         elif command_name=='clear_history':
             return ClassDict(status=self.clear_history())
         else:

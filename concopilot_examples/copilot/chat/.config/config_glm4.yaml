@@ -31,32 +31,30 @@ config:
     config:
       resources:
         -
-          group_id: org.concopilot.example.openai
-          artifact_id: openai-model
-          version: 0.0.1
+          group_id: org.concopilot.example.zhipuai
+          artifact_id: zhipuai-model
+          version: 0.0.0
           config:
-            resource_type: model
             # id: default
             # name: null
-            api_type: openai
-            base_url: https://api.openai.com/v1
-            api_version: 2023-05-15
-            # api_key: <api_key>
-            # organization: <organization>
-            # api_key_secret_name: OPENAI_API_KEY
-            model: gpt-3.5-turbo
-            base_model_name: gpt-3.5-turbo
-            force_chat: true
-            num_retries: 10
+            base_url: https://open.bigmodel.cn/api/paas/v4
+            base_url_secret_name: ZHIPUAI_BASE_URL
+            api_key: null
+            api_key_secret_name: ZHIPUAI_API_KEY
+            timeout: null
+            max_retries: 3
+            custom_headers: {}
+            model: glm-4
+            default_chat_param: {}
         -
           group_id: org.concopilot.basic.resource.category
           artifact_id: disk
           version: 0.0.0
 
   cerebrum:
-    group_id: org.concopilot.example.openai
-    artifact_id: openai-cerebrum
-    version: 0.0.3
+    group_id: org.concopilot.example.zhipuai
+    artifact_id: zhipuai-cerebrum
+    version: 0.0.0
     config:
       msg_retrieval_mode: ALL
 

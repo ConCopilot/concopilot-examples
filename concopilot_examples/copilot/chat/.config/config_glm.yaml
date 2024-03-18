@@ -1,13 +1,13 @@
 group_id: org.concopilot.example.copilot
 artifact_id: basic-chat-copilot
-version: 0.0.2
+version: 0.0.3
 
 type: copilot
 as_plugin: false
 
 setup:
   pip:
-    - concopilot>=0.0.3
+    - concopilot>=0.0.4
   package: concopilot.basic.copilot
 
 url: https://github.com/concopilot/concopilot
@@ -59,14 +59,14 @@ config:
   cerebrum:
     group_id: org.concopilot.example.glm
     artifact_id: glm-basic-cerebrum
-    version: 0.0.1
+    version: 0.0.2
     config:
       msg_retrieval_mode: ALL
 
   interactor:
     group_id: org.concopilot.example
     artifact_id: chat-interactor
-    version: 0.0.2
+    version: 0.0.3
     config:
       persist_history: false
       exit_tokens:

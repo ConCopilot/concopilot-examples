@@ -11,8 +11,8 @@ from concopilot.framework.resource import ResourceManager
 from concopilot.framework.cerebrum import InteractParameter, InteractResponse, Cerebrum
 from concopilot.framework.message import Message
 from concopilot.framework.message.manager import MessageManager
-from concopilot.util.context import Asset, AssetRef
-from concopilot.util.identity import Identity
+from concopilot.framework.asset import Asset, AssetRef
+from concopilot.framework.identity import Identity
 from concopilot.util.initializer import component
 from concopilot.util.jsons import JsonEncoder
 from concopilot.util import ClassDict
@@ -157,7 +157,7 @@ class AutoInteractor(BasicInteractor):
                     receiver=Identity(role='cerebrum', id=self.cerebrum.id, name=self.cerebrum.name),
                     content_type="<class 'dict'>",
                     content=ClassDict(
-                        error=e.__class__.__name__,
+                        error=type(e).__name__,
                         detail=str(e)
                     )
                 )
@@ -172,7 +172,7 @@ class AutoInteractor(BasicInteractor):
         if msg.content and not Asset.is_trivial(msg.content):
             asset=Asset(
                 asset_type=f'message content from `{sender if isinstance(sender, str) else "::".join([sender.role, sender.name])}`',
-                content_type=str(msg.content.__class__),
+                content_type=str(type(msg.content)),
                 content=msg.content
             )
             msg.content_type='asset_ref'
@@ -230,16 +230,11 @@ class AutoInteractor(BasicInteractor):
             .replace('{ai_id}', str(self.cerebrum.id))\
             .replace('{goals}', '\n'.join([f'{i+1}. {goal}' for i, goal in enumerate(self.goals)]))
 
-        if self.config.config.with_plugin_prompt:
-            instruction=instruction.replace('{plugins}', self.plugin_manager.get_combined_prompt())
+        instruction=instruction.replace('{plugins}', self.plugin_manager.get_combined_prompt())
 
         self.instructions=[instruction]
 
         return True
-
-    def setup_plugins(self):
-        if not self.config.config.with_plugin_prompt:
-            self.cerebrum.setup_plugins(self.plugin_manager)
 
     def _interact_with_cerebrum(self, command: str, message_history_start: int, assets: Dict[str, Asset]) -> Tuple[InteractResponse, int]:
         response=self.cerebrum.interact(param=InteractParameter(
@@ -282,7 +277,7 @@ class AutoInteractor(BasicInteractor):
         if command_name=='set_llm_param':
             return ClassDict(param=self.set_llm_param(param.get('update'), param.get('remove')))
         elif command_name=='retrieve_history':
-            return ClassDict(histories=self.retrieve_history(param.get('max_count')))
+            return ClassDict(histories=self.retrieve_history(param.get('max_count') if param else None))
         elif command_name=='clear_history':
             return ClassDict(status=self.clear_history())
         else:
