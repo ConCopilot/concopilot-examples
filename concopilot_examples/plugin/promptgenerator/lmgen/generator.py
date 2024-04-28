@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import yaml
-import uuid
 
 from typing import Dict
 

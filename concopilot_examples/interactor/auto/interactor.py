@@ -75,14 +75,16 @@ class AutoInteractor(BasicInteractor):
             content=msg_summary
         )
         self.context.assets.update(self.context.storage.get_or_default(self.assets_key, {}))
-        while True:
+        msg=None
+        self.status=BasicInteractor.Status.RUNNING
+        while self.status==BasicInteractor.Status.RUNNING:
             try:
                 if self.context.user_interface.has_user_msg():
                     count=0
                     while msg:=self.context.user_interface.get_user_msg():
                         if msg is not None:
                             if msg.receiver and msg.receiver.role=='interactor':
-                                self.context.user_interface.send_msg_user(self.on_msg(msg))
+                                self.context.user_interface.send_msg_to_user(self.on_msg(msg))
                             else:
                                 self._check_msg(msg, Identity(role='user', id=None, name=None))
                                 self.message_history.append(msg)
@@ -93,7 +95,7 @@ class AutoInteractor(BasicInteractor):
 
                 response, message_history_start=self._interact_with_cerebrum(cerebrum_command, message_history_start, self.context.assets)
                 try:
-                    msg=self.message_manager.parse(response)[0]
+                    msg=self.message_manager.parse(response, thrd_id=msg.thrd_id if msg else None)[0]
                 except Exception as e:
                     logger.error('Failed to parse the cerebrum response message.', exc_info=e)
                     raise ValueError('Failed to parse the cerebrum response message, maybe the response format is not acceptable.')
@@ -125,11 +127,11 @@ class AutoInteractor(BasicInteractor):
                     elif msg.receiver.role=='cerebrum':
                         pass
                     elif msg.receiver.role=='user':
-                        self.context.user_interface.send_msg_user(msg)
+                        self.context.user_interface.send_msg_to_user(msg)
                         while msg:=self.context.user_interface.wait_user_msg():
                             if msg is not None:
                                 if msg.receiver and msg.receiver.role=='interactor':
-                                    self.context.user_interface.send_msg_user(self.on_msg(msg))
+                                    self.context.user_interface.send_msg_to_user(self.on_msg(msg))
                                 else:
                                     break
                             else:
@@ -165,6 +167,8 @@ class AutoInteractor(BasicInteractor):
                 self.message_history.append(msg)
                 cerebrum_command='An error happened during the thinking loop. Check the error in the interaction messages, and try to fix the error and determine which next command to use, and respond using the json format specified above.'
 
+        self.status=BasicInteractor.Status.STOPPED
+
     def _check_msg(self, msg: Message, sender: Identity) -> Message:
         if sender is not None:
             msg.sender=sender
@@ -179,7 +183,7 @@ class AutoInteractor(BasicInteractor):
             self.context.assets[str(asset.asset_id)]=asset
             msg.content=AssetRef(asset_id=asset.asset_id)
         if AutoInteractor._need_convert_to_status(msg):
-            self.context.user_interface.send_msg_user(AutoInteractor._status_msg(msg))
+            self.context.user_interface.send_msg_to_user(AutoInteractor._status_msg(msg))
         logger.debug('\n'+json.dumps(msg, cls=JsonEncoder, ensure_ascii=False, indent=4)+'\n')
         return msg
 
@@ -211,15 +215,15 @@ class AutoInteractor(BasicInteractor):
                 time=settings.current_time()
             )
             self._goal_prompt_msg_list.append(msg)
-            self.context.user_interface.send_msg_user(msg)
+            self.context.user_interface.send_msg_to_user(msg)
             while msg:=self.context.user_interface.wait_user_msg():
                 if msg is not None:
                     if msg.receiver and msg.receiver.role=='interactor':
-                        self.context.user_interface.send_msg_user(self.on_msg(msg))
+                        self.context.user_interface.send_msg_to_user(self.on_msg(msg))
                     else:
                         break
                 else:
-                    logger.error('User interface pipeline is broken. Will exit.')
+                    logger.warning('User interface pipeline is broken. Will exit.')
                     return False
             self._goal_prompt_msg_list.append(msg)
             self.goals=msg.content.split('\n')

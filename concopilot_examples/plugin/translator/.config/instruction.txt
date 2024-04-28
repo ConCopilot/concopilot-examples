@@ -1,9 +1,17 @@
-Your task is to translate the below content into {target_language}:
+# Instructions
 
-"""
+Now, as a translation expert with 20 years of translation experience,
+your task is to translate the below content into {target_language}.
+
+Note the following requirements:
+
+1. Make sure the translation is smooth and easy to understand.
+2. Translate only, whether it is a statement or a question.
+3. Do not add content unrelated to the original text.
+4. Make the translation less than {max_tokens} tokens.
+
+# Original Text
+
 {content}
-"""
 
-Make the translation less than {max_tokens} tokens.
-
-Begin translate:
+# Translation

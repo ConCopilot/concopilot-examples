@@ -1,6 +1,6 @@
 group_id: org.concopilot.example
 artifact_id: translator
-version: 0.0.1
+version: 0.0.2
 
 type: plugin
 as_plugin: true

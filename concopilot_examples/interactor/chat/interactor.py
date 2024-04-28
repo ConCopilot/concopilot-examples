@@ -63,9 +63,10 @@ class ChatInteractor(BasicInteractor):
                 time=settings.current_time()
             )
             self.message_history.append(msg)
-        while True:
+        self.status=BasicInteractor.Status.RUNNING
+        while self.status==BasicInteractor.Status.RUNNING:
             try:
-                self.context.user_interface.send_msg_user(msg)
+                self.context.user_interface.send_msg_to_user(msg)
                 msg=self._check_user_msg()
                 if msg is None or msg.content in self.exit_tokens:
                     break
@@ -86,15 +87,17 @@ class ChatInteractor(BasicInteractor):
         if self.persist_history:
             self.context.storage.put(self.message_history_key, self.message_history)
 
+        self.status=BasicInteractor.Status.STOPPED
+
     def _check_user_msg(self):
         while msg:=self.context.user_interface.wait_user_msg():
             if msg is not None:
                 if msg.receiver and msg.receiver.role=='interactor':
-                    self.context.user_interface.send_msg_user(self.on_msg(msg))
+                    self.context.user_interface.send_msg_to_user(self.on_msg(msg))
                 else:
                     break
             else:
-                logger.error('User interface pipeline is broken. Will exit.')
+                logger.warning('User interface pipeline is broken. Will exit.')
                 break
         return msg
 
@@ -108,7 +111,7 @@ class ChatInteractor(BasicInteractor):
             require_token_len=False,
             require_cost=False
         ), **self.llm_param)
-        msg=self.message_manager.parse(response)[0]
+        msg=self.message_manager.parse(response, thrd_id=msg.thrd_id)[0]
         msg.sender=Identity(role='cerebrum', id=self.cerebrum.id, name=self.cerebrum.name)
         if msg.receiver is None:
             msg.receiver=Identity(role='user')
