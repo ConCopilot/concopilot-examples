@@ -6,13 +6,14 @@ import json
 import uuid
 import yaml
 import zipfile
+import threading
 import logging
 import numpy as np
 from PIL import Image
 
 from typing import Dict, Optional
 
-from concopilot.framework.interface import UserInterface
+from concopilot.framework.interface import AgentDrivenSimplexUserInterface
 from concopilot.framework.message import Message
 from concopilot.framework.asset import AssetRef
 from concopilot.framework.asset import asset_regex
@@ -25,7 +26,7 @@ from ....util import images
 logger=logging.getLogger(__file__)
 
 
-class WebChatUserInterface(UserInterface):
+class WebChatUserInterface(AgentDrivenSimplexUserInterface):
     def __init__(self, config: Dict):
         super(WebChatUserInterface, self).__init__(config)
         self._role_mapping=self.config.config.role_mapping
@@ -48,6 +49,9 @@ class WebChatUserInterface(UserInterface):
         with open(os.path.join(self._dist_path, 'config.yaml'), 'w', encoding='utf8') as f:
             yaml.dump(web_config, f, Dumper=YamlDumper)
 
+        self._interrupt_checking_timeout=self.config.config.interrupt_checking_timeout if (self.config.config.interrupt_checking_timeout is not None and self.config.config.interrupt_checking_timeout>0) else 1
+        self._interrupted: threading.Event = threading.Event()
+
     @property
     def websocket(self):
         if self._websocket is None:
@@ -56,7 +60,19 @@ class WebChatUserInterface(UserInterface):
 
     def _recv_msg(self, timeout):
         try:
-            msg=self.websocket.recv(timeout=timeout)
+            if timeout is None:
+                while not self.interrupted:
+                    try:
+                        msg=self.websocket.recv(timeout=self._interrupt_checking_timeout)
+                        break
+                    except TimeoutError:
+                        pass
+                else:
+                    raise InterruptedError('_recv_msg has been interrupted.')
+            elif not self.interrupted:
+                msg=self.websocket.recv(timeout=timeout)
+            else:
+                raise InterruptedError('_recv_msg has been interrupted.')
         except TimeoutError:
             msg=None
         if msg is not None:
@@ -73,17 +89,17 @@ class WebChatUserInterface(UserInterface):
                 self._msg=self._recv_msg(timeout=timeout)
         return self._msg
 
-    def send_msg_user(self, msg: Message):
+    def send_msg_to_user(self, msg: Message):
         if msg.sender and msg.sender.role=='interactor' and msg.content_type=='command' and msg.content and msg.content.command=='retrieve_history' and msg.content.response:
             histories=msg.content.response.histories
             msg.content.response.histories=[]
-            self._send_msg_user_single(msg)
+            self._send_msg_to_user_single(msg)
             for m in histories:
-                self._send_msg_user_single(m)
+                self._send_msg_to_user_single(m)
         else:
-            self._send_msg_user_single(msg)
+            self._send_msg_to_user_single(msg)
 
-    def _send_msg_user_single(self, msg: Message):
+    def _send_msg_to_user_single(self, msg: Message):
         if not msg.id and self.config.config.add_msg_id:
             msg.id=uuid.uuid4()
         if msg.content_type and ((content_type:=msg.content_type.strip()).startswith('image/') or content_type=='image' or content_type=='img'):
@@ -94,12 +110,12 @@ class WebChatUserInterface(UserInterface):
             msg='```'.join([(self._check_asset_refs(x) if idx%2==0 else x) for idx, x in enumerate(msg.split('```'))])
         self.websocket.send(msg)
 
-    def on_msg_user(self, msg: Message) -> Optional[Message]:
+    def on_msg_to_user(self, msg: Message) -> Optional[Message]:
         if not msg.thrd_id:
             msg=Message(**msg)
             msg.thrd_id=str(uuid.uuid4())
         thrd_id=msg.thrd_id
-        self.send_msg_user(msg)
+        self.send_msg_to_user(msg)
         while msg:=self._recv_msg(timeout=None):
             if msg.thrd_id==thrd_id:
                 return msg
@@ -163,3 +179,10 @@ class WebChatUserInterface(UserInterface):
         except Exception as e:
             logger.error('AssetRef error during converting.', exc_info=e)
             return match_obj.group(0)
+
+    def interrupt(self):
+        self._interrupted.set()
+
+    @property
+    def interrupted(self) -> bool:
+        return self._interrupted.is_set()

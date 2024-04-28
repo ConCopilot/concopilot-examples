@@ -31,6 +31,7 @@ config:
   port: 8080
   dist_path: null
   add_msg_id: false
+  interrupt_checking_timeout: 1
 
   websocket_host: localhost
   websocket_port: 8088

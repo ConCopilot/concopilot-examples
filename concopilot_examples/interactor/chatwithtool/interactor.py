@@ -54,6 +54,8 @@ class ChatWithToolInteractor(BasicInteractor):
         self.message_history: List[Message] = []
         self.message_history_start: int = 0
 
+        self._thrd_id=None
+
     def setup_prompts(self):
         super(ChatWithToolInteractor, self).setup_prompts()
         if self.config.config.instruction_file:
@@ -104,7 +106,8 @@ class ChatWithToolInteractor(BasicInteractor):
                 return
             msg_list=self._interact_with_cerebrum()
 
-        while True:
+        self.status=BasicInteractor.Status.RUNNING
+        while self.status==BasicInteractor.Status.RUNNING:
             try:
                 has_user_msg=False
                 for msg in msg_list:
@@ -164,6 +167,8 @@ class ChatWithToolInteractor(BasicInteractor):
                 self._check_and_send_msg_to_user(msg)
                 if not self._wait_user_msg():
                     break
+
+        self.status=BasicInteractor.Status.STOPPED
 
     def _check_msg_serializable(self, msg: Message) -> Message:
         msg.time=settings.current_time()
@@ -228,37 +233,37 @@ class ChatWithToolInteractor(BasicInteractor):
 
     def _check_and_send_msg_to_user(self, msg):
         if (msg:=self._get_msg_to_user(msg)) is not None:
-            self.context.user_interface.send_msg_user(msg)
+            self.context.user_interface.send_msg_to_user(msg)
 
     def _check_user_msg(self) -> bool:
-        if self.context.user_interface.has_user_msg():
-            while msg:=self.context.user_interface.get_user_msg():
-                if msg is not None:
-                    if msg.receiver and msg.receiver.role=='interactor':
-                        self.context.user_interface.send_msg_user(self.on_msg(msg))
-                    else:
-                        if msg is None or msg.content in self.exit_tokens:
-                            return False
-                        msg.sender=Identity(role='user')
-                        msg=self._check_msg_serializable(msg)
-                        self.message_history.append(msg)
-                if not self.context.user_interface.has_user_msg():
-                    break
+        while self.context.user_interface.has_user_msg():
+            msg=self.context.user_interface.get_user_msg()
+            if msg is not None:
+                if msg.receiver and msg.receiver.role=='interactor':
+                    self.context.user_interface.send_msg_to_user(self.on_msg(msg))
+                else:
+                    if msg.content in self.exit_tokens:
+                        return False
+                    msg.sender=Identity(role='user')
+                    self._thrd_id=msg.thrd_id
+                    msg=self._check_msg_serializable(msg)
+                    self.message_history.append(msg)
         return True
 
     def _wait_user_msg(self) -> bool:
         while msg:=self.context.user_interface.wait_user_msg():
             if msg is not None:
                 if msg.receiver and msg.receiver.role=='interactor':
-                    self.context.user_interface.send_msg_user(self.on_msg(msg))
+                    self.context.user_interface.send_msg_to_user(self.on_msg(msg))
                 else:
                     break
             else:
-                logger.error('User interface pipeline is broken. Will exit.')
+                logger.warning('User interface pipeline is broken. Will exit.')
                 break
         if msg is None or msg.content in self.exit_tokens:
             return False
         msg.sender=Identity(role='user')
+        self._thrd_id=msg.thrd_id
         msg=self._check_msg_serializable(msg)
         self.message_history.append(msg)
         return True
@@ -273,7 +278,7 @@ class ChatWithToolInteractor(BasicInteractor):
             require_cost=False
         ), **self.llm_param)
         try:
-            msg_list=self.message_manager.parse(response)
+            msg_list=self.message_manager.parse(response, thrd_id=self._thrd_id)
         except Exception as e:
             logger.error('Failed to parse the cerebrum response message.', exc_info=e)
             raise ValueError('Failed to parse the cerebrum response message, maybe the response format is not a legal JSON.')
